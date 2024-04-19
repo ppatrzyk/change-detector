@@ -1,0 +1,80 @@
+{
+    "users": [
+        {
+            "name": "rabbit",  
+            "password_hash": "XTqRAmzK9OviYkdsDMMeeE66LAGvX7OGd66beUmW2j/sX2g5",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": "administrator"
+        }
+    ],
+    "vhosts":[
+        {"name":"/"}
+    ],
+    "permissions": [
+        {
+            "user": "rabbit",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+          }
+    ],
+    "queues":[
+        {
+            "name":"contentqueue",
+            "vhost":"/",
+            "durable":true,
+            "auto_delete":false,
+            "arguments":{
+                "x-queue-type": "classic",
+                "x-message-ttl": 3600000
+            }
+        },
+        {
+            "name":"observerqueue",
+            "vhost":"/",
+            "durable":true,
+            "auto_delete":false,
+            "arguments":{
+                "x-queue-type": "classic",
+                "x-message-ttl": 3600000
+            }
+        }
+    ],
+    "exchanges": [
+      {
+        "name": "contentexchange",
+        "vhost": "/",
+        "type": "fanout",
+        "durable": true,
+        "auto_delete": false,
+        "internal": false,
+        "arguments": {}
+      },
+      {
+        "name": "observerexchange",
+        "vhost": "/",
+        "type": "fanout",
+        "durable": true,
+        "auto_delete": false,
+        "internal": false,
+        "arguments": {}
+      }
+    ],
+    "bindings": [
+      {
+        "source": "contentexchange",
+        "vhost": "/",
+        "destination": "contentqueue",
+        "destination_type": "queue",
+        "arguments": {}
+      },
+      {
+        "source": "observerexchange",
+        "vhost": "/",
+        "destination": "observerqueue",
+        "destination_type": "queue",
+        "arguments": {}
+      }
+    ]
+}
