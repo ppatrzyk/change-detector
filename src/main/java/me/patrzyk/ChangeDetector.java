@@ -1,47 +1,50 @@
 package me.patrzyk;
 
+import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
+import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
-/**
- * Skeleton for a Flink DataStream Job.
- *
- * <p>For a tutorial how to write a Flink application, check the
- * tutorials and examples on the <a href="https://flink.apache.org">Flink Website</a>.
- *
- * <p>To package your application into a JAR file for execution, run
- * 'mvn clean package' on the command line.
- *
- * <p>If you change the name of the main class (with the public static void main(String[] args))
- * method, change the respective entry in the POM.xml file (simply search for 'mainClass').
- */
 public class ChangeDetector {
 
 	public static void main(String[] args) throws Exception {
-		// Sets up the execution environment, which is the main entry point
-		// to building Flink applications.
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+		// env.enableCheckpointing(10000);
 
-		/*
-		 * Here, you can start creating your execution plan for Flink.
-		 *
-		 * Start with getting some data from the environment, like
-		 * 	env.fromSequence(1, 10);
-		 *
-		 * then, transform the resulting DataStream<Long> using operations
-		 * like
-		 * 	.filter()
-		 * 	.flatMap()
-		 * 	.window()
-		 * 	.process()
-		 *
-		 * and many more.
-		 * Have a look at the programming guide:
-		 *
-		 * https://nightlies.apache.org/flink/flink-docs-stable/
-		 *
-		 */
+		final RMQConnectionConfig connectionConfig = new RMQConnectionConfig.Builder()
+			.setUri("amqp://rabbit:rabbit@rabbit:5672/%2f")
+			.build();
 
-		// Execute program, beginning computation.
-		env.execute("Flink Java API Skeleton");
+		final var contentSource = new RMQSource<String>(
+			connectionConfig,
+			"contentqueue",
+			true,
+			new SimpleStringSchema()
+		);
+
+		final var contentSink = new RMQSink<String>(
+			connectionConfig,
+			"observerqueue",
+			new SimpleStringSchema()
+		);
+
+		final DataStream<String> content = env
+			.addSource(contentSource)
+			.setParallelism(1);
+
+		var processFunc = new MapFunction<String, String>() {
+			@Override
+			public String map(String value) {
+				return "processed";
+			}
+		};
+		DataStream<String> detect = content.map(processFunc);
+		detect.print();
+		
+		detect.addSink(contentSink);
+		env.execute("Change Detector");
 	}
 }

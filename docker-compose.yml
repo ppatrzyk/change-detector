@@ -28,3 +28,25 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+  flinkjobmanager:
+    image: flink:1.16.3
+    command: ["standalone-job", "--job-classname", "me.patrzyk.ChangeDetector"]
+    ports:
+      - "8081:8081"
+    environment:
+      - "FLINK_PROPERTIES=jobmanager.rpc.address: flinkjobmanager"
+    volumes:
+      - ./target/change-detector-1.0-SNAPSHOT.jar:/opt/flink/usrlib/change-detector-1.0-SNAPSHOT.jar
+    depends_on:
+      rabbit:
+        condition: service_healthy
+  flinktask:
+    image: flink:1.16.3
+    command: taskmanager
+    environment:
+      - "FLINK_PROPERTIES=jobmanager.rpc.address: flinkjobmanager"
+    volumes:
+      - ./target/change-detector-1.0-SNAPSHOT.jar:/opt/flink/usrlib/change-detector-1.0-SNAPSHOT.jar
+    depends_on:
+      rabbit:
+        condition: service_healthy
