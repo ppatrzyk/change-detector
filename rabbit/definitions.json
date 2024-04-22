@@ -24,21 +24,13 @@
             "name":"contentqueue",
             "vhost":"/",
             "durable":true,
-            "auto_delete":false,
-            "arguments":{
-                "x-queue-type": "classic",
-                "x-message-ttl": 3600000
-            }
+            "auto_delete":false
         },
         {
             "name":"observerqueue",
             "vhost":"/",
             "durable":true,
-            "auto_delete":false,
-            "arguments":{
-                "x-queue-type": "classic",
-                "x-message-ttl": 3600000
-            }
+            "auto_delete":false
         }
     ],
     "exchanges": [
