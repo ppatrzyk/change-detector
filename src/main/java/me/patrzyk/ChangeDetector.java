@@ -1,7 +1,8 @@
 package me.patrzyk;
 
-import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.formats.json.JsonDeserializationSchema;
+import org.apache.flink.formats.json.JsonSerializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
@@ -18,33 +19,42 @@ public class ChangeDetector {
 			.setUri("amqp://rabbit:rabbit@rabbit:5672/%2f")
 			.build();
 
-		final var contentSource = new RMQSource<String>(
+		JsonDeserializationSchema<Entry> entrySchema = new JsonDeserializationSchema<>(Entry.class);
+
+		final var contentSource = new RMQSource<Entry>(
 			connectionConfig,
 			"contentqueue",
 			true,
-			new SimpleStringSchema()
+			entrySchema
 		);
 
-		final var contentSink = new RMQSink<String>(
+		JsonSerializationSchema<Detect> detectSchema = new JsonSerializationSchema<>();
+
+		final var contentSink = new RMQSink<Detect>(
 			connectionConfig,
 			"observerqueue",
-			new SimpleStringSchema()
+			detectSchema
 		);
 
-		final DataStream<String> content = env
+		final DataStream<Entry> content = env
 			.addSource(contentSource)
 			.setParallelism(1);
 
-		var processFunc = new MapFunction<String, String>() {
+		var processFunc = new MapFunction<Entry, Detect>() {
 			@Override
-			public String map(String value) {
-				return "processed";
+			public Detect map(Entry entry) {
+				var ts = entry.getTs();
+				var content = entry.getContent();
+				var detect = new Detect(ts, ts, "todo");
+				return detect;
 			}
 		};
-		DataStream<String> detect = content.map(processFunc);
-		detect.print();
-		
+		DataStream<Detect> detect = content.map(processFunc);
 		detect.addSink(contentSink);
+
+		content.print();
+		detect.print();
+
 		env.execute("Change Detector");
 	}
 }
