@@ -28,9 +28,9 @@ public class ChangeDetector {
 			entrySchema
 		);
 
-		JsonSerializationSchema<Detect> detectSchema = new JsonSerializationSchema<>();
+		JsonSerializationSchema<ProcessedEntry> detectSchema = new JsonSerializationSchema<>();
 
-		final var contentSink = new RMQSink<Detect>(
+		final var contentSink = new RMQSink<ProcessedEntry>(
 			connectionConfig,
 			"observerqueue",
 			detectSchema
@@ -40,16 +40,17 @@ public class ChangeDetector {
 			.addSource(contentSource)
 			.setParallelism(1);
 
-		var processFunc = new MapFunction<Entry, Detect>() {
+		// todo actual comparison to previous state
+		var processFunc = new MapFunction<Entry, ProcessedEntry>() {
 			@Override
-			public Detect map(Entry entry) {
+			public ProcessedEntry map(Entry entry) {
 				var ts = entry.getTs();
 				var content = entry.getContent();
-				var detect = new Detect(ts, ts, "todo");
+				var detect = new ProcessedEntry(ts, null, content, null, null);
 				return detect;
 			}
 		};
-		DataStream<Detect> detect = content.map(processFunc);
+		DataStream<ProcessedEntry> detect = content.map(processFunc);
 		detect.addSink(contentSink);
 
 		content.print();

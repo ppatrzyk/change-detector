@@ -5,6 +5,9 @@ import java.util.Date;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Entry {
+    @JsonProperty("key")
+    private String key;
+
     @JsonProperty("ts")
     private Date ts;
 
@@ -13,7 +16,7 @@ public class Entry {
 
     @Override
     public String toString() {
-        return "Entry [ts=" + ts + ", content=" + content + "]";
+        return "Entry [key=" + key + ", ts=" + ts + ", content=" + content + "]";
     }
 
     public Date getTs() {
@@ -22,6 +25,10 @@ public class Entry {
 
     public String getContent() {
         return content;
+    }
+
+    public String getKey() {
+        return key;
     }
 
 }
