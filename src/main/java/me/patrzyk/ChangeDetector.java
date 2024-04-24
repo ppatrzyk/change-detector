@@ -4,6 +4,7 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
 import org.apache.flink.formats.json.JsonSerializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
 import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
@@ -39,21 +40,14 @@ public class ChangeDetector {
 		final DataStream<Entry> content = env
 			.addSource(contentSource)
 			.setParallelism(1);
+		
+		final KeyedStream<Entry, String> contentKeyed = content
+			.keyBy(entry -> entry.getKey());
 
-		// todo actual comparison to previous state
-		var processFunc = new MapFunction<Entry, ProcessedEntry>() {
-			@Override
-			public ProcessedEntry map(Entry entry) {
-				var ts = entry.getTs();
-				var content = entry.getContent();
-				var detect = new ProcessedEntry(ts, null, content, null, null);
-				return detect;
-			}
-		};
-		DataStream<ProcessedEntry> detect = content.map(processFunc);
+		DataStream<ProcessedEntry> detect = contentKeyed.flatMap(new CompareProcessFunction());
 		detect.addSink(contentSink);
 
-		content.print();
+		contentKeyed.print();
 		detect.print();
 
 		env.execute("Change Detector");

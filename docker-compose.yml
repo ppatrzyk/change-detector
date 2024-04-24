@@ -3,10 +3,9 @@ services:
   content:
     image: content-generator:0.1
     environment:
-      - RABBIT=http://rabbit:15672/api/exchanges/%2F/contentexchange/publish
-      - RABBIT_LOGIN=rabbit
-      - RABBIT_PASS=rabbit
-      - URL=https://httpbin.org/html
+      - RABBIT=amqp://rabbit:rabbit@rabbit:5672
+      - RABBIT_EXCHANGE=contentexchange
+      - URL=https://wydarzenia.interia.pl/
     links:
       - rabbit
     depends_on:

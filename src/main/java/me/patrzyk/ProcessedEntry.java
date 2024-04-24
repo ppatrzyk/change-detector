@@ -1,6 +1,7 @@
 package me.patrzyk;
 
 import java.util.Date;
+import java.util.List;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,9 +19,9 @@ public class ProcessedEntry {
     private String previousContent;
 
     @JsonProperty("diff")
-    private String diff;
+    private List<String[]> diff;
 
-    public ProcessedEntry(Date ts, Date previousTs, String content, String previousContent, String diff) {
+    public ProcessedEntry(Date ts, Date previousTs, String content, String previousContent, List<String[]> diff) {
         this.ts = ts;
         this.previousTs = previousTs;
         this.content = content;

@@ -61,8 +61,11 @@
 			<artifactId>flink-json</artifactId>
 			<version>${flink.version}</version>
 		</dependency>
-
-
+		<dependency>
+			<groupId>io.github.java-diff-utils</groupId>
+			<artifactId>java-diff-utils</artifactId>
+			<version>4.12</version>
+		</dependency>
 
 		<!-- Add logging framework, to produce console output when running in the IDE. -->
 		<!-- These dependencies are excluded from the application JAR by default. -->
