@@ -1,14 +1,7 @@
-FROM debian:12.5
+FROM python:3.12.3-slim
 
-RUN apt-get update \
-    && apt-get install -y \
-    ca-certificates \
-    curl \
-    uuid-runtime \
-    --no-install-recommends \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+COPY ./ ./content_generator/
+WORKDIR /content_generator
+RUN pip3 install -r requirements.txt
 
-COPY ./get_site.sh /usr/sbin/get_site.sh
-
-CMD ["bash", "/usr/sbin/get_site.sh"]
+CMD [ "python3", "get_site.py" ]
