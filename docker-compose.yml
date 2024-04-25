@@ -34,6 +34,9 @@ services:
       - "8081:8081"
     environment:
       - "FLINK_PROPERTIES=jobmanager.rpc.address: flinkjobmanager"
+      - RABBIT=amqp://rabbit:rabbit@rabbit:5672/%2f
+      - RABBIT_SOURCE_QUEUE=contentqueue
+      - RABBIT_SINK_QUEUE=observerqueue
     volumes:
       - ./target/change-detector-1.0-SNAPSHOT.jar:/opt/flink/usrlib/change-detector-1.0-SNAPSHOT.jar
     depends_on:
@@ -44,6 +47,9 @@ services:
     command: taskmanager
     environment:
       - "FLINK_PROPERTIES=jobmanager.rpc.address: flinkjobmanager"
+      - RABBIT=amqp://rabbit:rabbit@rabbit:5672/%2f
+      - RABBIT_SOURCE_QUEUE=contentqueue
+      - RABBIT_SINK_QUEUE=observerqueue
     volumes:
       - ./target/change-detector-1.0-SNAPSHOT.jar:/opt/flink/usrlib/change-detector-1.0-SNAPSHOT.jar
     depends_on:

@@ -1,6 +1,5 @@
 package me.patrzyk;
 
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
 import org.apache.flink.formats.json.JsonSerializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -13,18 +12,21 @@ import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig
 public class ChangeDetector {
 
 	public static void main(String[] args) throws Exception {
+		String rabbit = System.getenv("RABBIT");
+		String rabbitSourceQueue = System.getenv("RABBIT_SOURCE_QUEUE");
+		String rabbitSinkQueue = System.getenv("RABBIT_SINK_QUEUE");
+
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-		// env.enableCheckpointing(10000);
 
 		final RMQConnectionConfig connectionConfig = new RMQConnectionConfig.Builder()
-			.setUri("amqp://rabbit:rabbit@rabbit:5672/%2f")
+			.setUri(rabbit)
 			.build();
 
 		JsonDeserializationSchema<Entry> entrySchema = new JsonDeserializationSchema<>(Entry.class);
 
 		final var contentSource = new RMQSource<Entry>(
 			connectionConfig,
-			"contentqueue",
+			rabbitSourceQueue,
 			true,
 			entrySchema
 		);
@@ -33,7 +35,7 @@ public class ChangeDetector {
 
 		final var contentSink = new RMQSink<ProcessedEntry>(
 			connectionConfig,
-			"observerqueue",
+			rabbitSinkQueue,
 			detectSchema
 		);
 
@@ -45,10 +47,8 @@ public class ChangeDetector {
 			.keyBy(entry -> entry.getKey());
 
 		DataStream<ProcessedEntry> detect = contentKeyed.flatMap(new CompareProcessFunction());
-		detect.addSink(contentSink);
 
-		contentKeyed.print();
-		detect.print();
+		detect.addSink(contentSink);
 
 		env.execute("Change Detector");
 	}
